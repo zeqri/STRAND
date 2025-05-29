@@ -1,0 +1,45 @@
+---
+ # file is parsed by inner-most keys only
+ data:
+    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/af3_1022P_1022R.csv
+    #  data_path: /gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/dill_all
+    #  data_path: /gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/dill_mod_rot
+    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/af3_1022P_1022R_rot_mod.csv
+     rna_model path: /home/fr/fr_fr/fr_ma453/DiffDock-PP/RNA-FM_pretrained.pth
+     resolution: residue
+     no_graph_cache: False
+     use_orientation_features: False
+     multiplicity: 1
+ model:
+     model_type: e3nn
+     no_torsion: True
+     no_batch_norm: True
+     lm_embed_dim: 640
+     dropout: 0.0
+     dynamic_max_cross: True
+     cross_cutoff_weight: 3
+     cross_cutoff_bias: 40
+     cross_max_dist: 80
+     num_conv_layers: 4
+     ns: 16
+     nv: 4
+     dist_embed_dim: 32
+     cross_dist_embed_dim: 32
+     sigma_embed_dim: 32
+     max_radius: 5
+ train:
+     epochs: 350
+     lr: 1.e-3
+     weight_decay: 0.
+     tor_weight: 0.
+     val_inference_freq: 10
+     num_steps: 40
+ diffusion:
+     tr_s_min: 0.01
+     tr_s_max: 30.0
+     rot_s_min: 0.01
+     rot_s_max: 1.65 
+     sample_train: True
+     #num_inference_complexes_train_data: 1200
+     num_inference_complexes_train_data: 100
+     
