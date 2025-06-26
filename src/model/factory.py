@@ -85,8 +85,9 @@ def select_model(fold_dir,confidence_mode):
         if "last" not in path:
             paths.append(path)
 
-    if confidence_mode:
-        models = sorted(paths, key=lambda s:-float(s.split("/")[-1].split("_")[-1][:-4]))
+    if confidence_mode: 
+        models = sorted(paths, key=lambda s: -int(s.split("/")[-1].split("_")[-3]))
+        # models = sorted(paths, key=lambda s:-float(s.split("/")[-1].split("_")[-1][:-4])) 
     else:
         models = sorted(paths, key=lambda s:float(s.split("/")[-1].split("_")[4]))
 
