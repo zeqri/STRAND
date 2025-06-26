@@ -9,14 +9,14 @@ NUM_GPU=1
 BATCH_SIZE=16  # split across all GPUs
 
 NAME="rna_confidence"  # change to name of config file
-RUN_NAME="dips_confidence_model"
+RUN_NAME="rna_confidence_model"
 CONFIG="config/${NAME}.yaml"
 
 # you may save to your own directory
 SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 
-SAMPLES_DIRECTORY="datasets/DIPS/confidence_full"
+SAMPLES_DIRECTORY="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/samples"
 
 echo SAVE_PATH: $SAVE_PATH
 
@@ -32,6 +32,7 @@ python src/main_confidence.py \
     --logger "wandb" \
     --project "Confidence model" \
     --samples_directory $SAMPLES_DIRECTORY \
+    --rmsd_prediction
     #--checkpoint_path $SAVE_PATH \
     #--debug True # load small dataset
     #--entity coarse-graining-mit \

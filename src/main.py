@@ -112,9 +112,10 @@ def main(args=None):
             printt("finished creating data splits")
             # get model and load checkpoint, if relevant
             model = load_model_for_training(args, data_params, fold, load_best=True) # load last_model to continue training
-            model = to_cuda(model, args)
+            
+            if torch.cuda.is_available():
+                model=to_cuda(model,args)
             printt("finished loading model")
-
             numel = sum([p.numel() for p in model.parameters()])
             printt('Model with', numel, 'parameters')
 

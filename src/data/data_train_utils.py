@@ -317,9 +317,16 @@ class Loader:
 
         printt("Computing ESM embeddings") 
         esm_model, alphabet = esm.pretrained.esm2_t30_150M_UR50D() # 640 only one negative value
-        self.esm_model = esm_model.cuda().eval()
         fm_model, fm_alphabet= fm.pretrained.rna_fm_t12()
-        self.rna_model = fm_model.cuda().eval()
+
+        if torch.cuda.is_available():
+            self.esm_model = esm_model.cuda().eval()
+            self.rna_model = fm_model.cuda().eval()
+        else:
+            self.esm_model = esm_model.eval()
+            self.rna_model = fm_model.eval()
+
+
         fm_batch_converter = fm_alphabet.get_batch_converter()
         tokenizer = alphabet.get_batch_converter()
         # convert to 3 letter codes
@@ -363,8 +370,7 @@ class Loader:
 
         # overwrite graph.x for each element in batch
         self._save_esm_rep(data, path_to_rep)
-
-
+        
         return data
     
 
@@ -388,7 +394,10 @@ class Loader:
         all_reps = []
         #for batch in tqdm(batches, desc="ESM", ncols=50):
         for batch in batches:
-            reps = self.esm_model(batch.cuda(), repr_layers=[30])
+            if torch.cuda.is_available():
+                reps = self.esm_model(batch.cuda(), repr_layers=[30])
+            else:
+                reps = self.esm_model(batch, repr_layers=[30])
             reps = reps["representations"][30].cpu()[:,1:]
             all_reps.append(reps)       
         # crop to length
@@ -423,8 +432,11 @@ class Loader:
                     all_embeddings.append(reps["representations"][12]) 
                 reps = torch.cat(all_embeddings, dim=1)  
                 reps = reps.cpu()[:,1:]
-            else: 
-                reps = self.rna_model(batch.cuda(), repr_layers=[12])
+            else:  
+                if torch.cuda.is_available():
+                    reps = self.rna_model(batch.cuda(), repr_layers=[12])
+                else:
+                    reps = self.rna_model(batch, repr_layers=[12])
                 reps = reps["representations"][12].cpu()[:,1:]  
     
            

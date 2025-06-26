@@ -1,14 +1,7 @@
 ---
  # file is parsed by inner-most keys only
  data:
-     dataset: rna
-    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/data_inf_diff.csv 
-    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/data_inf_af3.csv
-    #  data_path: /gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/BenchSetPairs
-     data_path: /home/fr/fr_fr/fr_ma453/DiffDock-PP/datasets_rna3db/rna_protein_pairs_3db
-     data_file: "/home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/PR_pairs_val.csv"
-
- 
+     dataset: rna   
      resolution: residue
      no_graph_cache: True
      use_orientation_features: False
@@ -49,7 +42,7 @@
      num_inference_complexes_train_data: 1200
  inference:
      mirror_ligand: False
-     run_inference_without_confidence_model: True
+    #  run_inference_without_confidence_model: True
      wandb_sweep: False
      no_final_noise: True
      actual_steps: 40

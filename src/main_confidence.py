@@ -33,7 +33,8 @@ def main(args=None):
     if args is None:
         args = parse_args()
     print(f'args.rmsd_classification_cutoff: {args.rmsd_classification_cutoff}')
-    torch.cuda.set_device(args.gpu)
+    if torch.cuda.is_available():
+        torch.cuda.set_device(args.gpu)    
     torch.hub.set_dir(args.torchhub_path)
 
     # init wandb before too long data loading to avoid timeout error thrown by wandb
@@ -113,9 +114,9 @@ def main(args=None):
             printt("finished creating data splits")
             # get model and load checkpoint, if relevant
             model = load_model_for_training(args, data_params, fold,confidence_mode=True)
-            model = to_cuda(model, args)
+            if torch.cuda.is_available():
+                model = to_cuda(model, args)
             printt("finished loading model")
-
             numel = sum([p.numel() for p in model.parameters()])
             printt('Model with', numel, 'parameters')
 

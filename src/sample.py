@@ -43,48 +43,13 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
 
     # For visualization
     for i in range(visualize_first_n_samples):
-        write_pdb(visualization_values[i], graph_gts[i], "receptor",
+        write_pdb(visualization_values[i], graph_gts[i], "both",
               f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-receptor.pdb")
-        write_pdb(visualization_values[i], graph_gts[i], "ligand",
+        write_pdb(visualization_values[i], graph_gts[i], "both",
               f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-gt.pdb")
-        write_pdb(visualization_values[i], data_list[i], "ligand",
+        write_pdb(visualization_values[i], data_list[i], "both",
               f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-0.pdb")
 
-    # # determine batch_size
-    # batch_size=args.batch_size
-    # while batch_size > 2:
-    #     try:
-    #         test_loader = DataLoader(data_list, batch_size=batch_size)
-    #         for complex_graphs in test_loader:
-    #             complex_graphs = complex_graphs.cuda(args.gpu)
-    #             set_time(complex_graphs, 0, 0, 0, batch_size, complex_graphs["ligand"]["pos"].device)
-    #             with torch.no_grad():
-    #                 outputs = model(complex_graphs)
-    #                 #outputs = model(complex_graphs)
-    #             print('Ran model')
-    #             break
-    #         break
-    #     except RuntimeError as e:
-    #         if 'out of memory' in str(e):
-    #             print('| WARNING: ran out of memory, Reducing batch size')
-    #             for p in model.parameters():
-    #                 if p.grad is not None:
-    #                     del p.grad  # free some memory
-    #             torch.cuda.empty_cache()
-    #             gc.collect()
-    #             batch_size = batch_size // 2
-    #             print('Reduced batch size')
-
-    # for p in model.parameters():
-    #     if p.grad is not None:
-    #         del p.grad  # free some memory
-    # torch.cuda.empty_cache()
-    # gc.collect()
-    # # Reducing it one more time to be safe
-    # #if batch_size > 2:
-    # #    batch_size = batch_size // 2
-    # print(f'Using batch size: {batch_size}')
-    # batch_size_to_return = batch_size
 
     # sample
     for t_idx in range(args.num_steps):
@@ -187,7 +152,7 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
             #printt(f'finished batch {com_idx}')
 
         for i in range(visualize_first_n_samples):
-            write_pdb(visualization_values[i], new_data_list[i], "ligand",
+            write_pdb(visualization_values[i], new_data_list[i], "both",
                       f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-{t_idx + 1}.pdb")
 
         # update starting point for next step
@@ -220,10 +185,11 @@ def write_pdb(item, graph, part, path):
         file.writelines(lines)
 
 
+
 def to_pdb_lines(visualization_values, graph, part):
     assert part in ("ligand", "receptor", "both"), "Part should be ligand or receptor"
     parts = ["ligand", "receptor"] if part == "both" else [part]
-
+    
     lines = []
     for part in parts:
         this_vis_values = visualization_values[part]
@@ -231,15 +197,15 @@ def to_pdb_lines(visualization_values, graph, part):
         for i, resname in enumerate(this_vis_values["resname"]):
             xyz = graph[part].pos[i]
 
+            # Correct spacing for residue name, chain identifier, and residue sequence number
             line = f'ATOM  {i + 1:>5} {this_vis_values["atom_name"][i]:>4} '
-            line = line + f'{resname} {this_vis_values["chain"][i]}{this_vis_values["residue"][i]:>4}    '.replace("<Chain id=", "").replace(">", "")
-            line = line + f'{xyz[0]:>8.3f}{xyz[1]:>8.3f}{xyz[2]:>8.3f}'
-            line = line + '  1.00  0.00          '
-            line = line + f'{this_vis_values["element"][i]:>2} 0\n'
+            line += f'{resname:>3} {this_vis_values["chain"][i]}{this_vis_values["residue"][i]:>4}    '
+            line += f'{xyz[0]:>8.3f}{xyz[1]:>8.3f}{xyz[2]:>8.3f}'
+            line += '  1.00  0.00          '
+            line += f'{this_vis_values["element"][i]:>2} 0\n'
             lines.append(line)
 
     return lines
-
 
 def get_timesteps(inference_steps):
     return np.linspace(1, 0, inference_steps + 1)[:-1]
@@ -270,12 +236,6 @@ def randomize_position(data_list, args):
             data_list.set_graph(i, complex_graph)
 
     for i, complex_graph in enumerate(data_list):
-        # randomize rotation
-        # print(complex_graph)
-        # print(complex_graph["ligand"])
-        # print(complex_graph["ligand"].pos)
-        # if type(complex_graph) == tuple: # TODO: remove
-        #     complex_graph=complex_graph[0] 
 
         pos = complex_graph["ligand"].pos
         center = torch.mean(pos, dim=0, keepdim=True)

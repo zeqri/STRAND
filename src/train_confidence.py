@@ -23,21 +23,15 @@ def train_epoch(args, model, loader, optimizer, writer, num_batches):
     all_pred = []
     all_loss = []
     for data in tqdm(loader, total=len(loader)):
-        rmsd = torch.tensor([sample.rmsd for sample in data])
-        # print('batch_0_0_ligand', batch[0][0]['ligand'].pos)
-        # print('batch_0_0_receptor', batch[0][0]['receptor'].pos)
-        # print('batch_0_1_ligand', batch[0][1]['ligand'].pos)
-        # print('batch_0_1_receptor', batch[0][1]['receptor'].pos)
-        # print('batch_0_0', batch[0][0])
-        # print('batch_0_1', batch[0][1])
-
-        # print('batch_0', batch[0])
-        # print('batch_1', batch[1])
-        # raise RuntimeError
-        #data, rmsd = batch # TODO
+        if args.num_gpu > 1:        
+            rmsd= torch.tensor([sample.rmsd for sample in data])
+        else:
+            rmsd=data.rmsd  
         # move to CUDA
         if args.num_gpu == 1 and torch.cuda.is_available():
-            data = data.cuda()
+            data = data.cuda() 
+
+
 
         optimizer.zero_grad()
         torch.cuda.empty_cache()
@@ -46,22 +40,14 @@ def train_epoch(args, model, loader, optimizer, writer, num_batches):
             if args.rmsd_prediction:
                 labels = rmsd.to(device)
                 confidence_loss = F.mse_loss(pred, labels)
-            else:
-                #if isinstance(args.rmsd_classification_cutoff, list):
-                #    labels = torch.cat([graph.y_binned for graph in data]).to(device)
-                #    confidence_loss = F.cross_entropy(pred, labels)
-                #else:
+            else:          
                 labels = (rmsd < args.rmsd_classification_cutoff).float()
                 if args.num_gpu == 1 and torch.cuda.is_available():
                     labels = labels.to(device)
-                #print(f'labels: {labels}')
-                #print(f'pred: {pred}')
-                #print(f'rmsd: {rmsd}')
+              
                 confidence_loss = F.binary_cross_entropy_with_logits(pred, labels.to(pred.device))
-                #accuracy = torch.mean((labels == (pred > 0).int()).float())
-                #print(f'train_accuracy: {accuracy}')
+    
             loss = confidence_loss
-            
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1)
             optimizer.step()
@@ -117,38 +103,30 @@ def test_epoch(args, model, loader, writer):
     all_pred = []
     all_loss = []
     for data in tqdm(loader, total=len(loader)):
-        rmsd = torch.tensor([sample.rmsd for sample in data])
-        #data, rmsd = batch
+        if args.num_gpu > 1:        
+            rmsd= torch.tensor([sample.rmsd for sample in data])
+        else:
+            rmsd=data.rmsd  
         # move to CUDA
         if args.num_gpu == 1 and torch.cuda.is_available():
-            data = data.cuda()
+            data = data.cuda() 
 
         try:
             with torch.no_grad():
                 pred = model(data)
-            
+
             if args.rmsd_prediction:
                 labels = rmsd.to(device)
                 confidence_loss = F.mse_loss(pred, labels)
             else:
-                #if isinstance(args.rmsd_classification_cutoff, list):
-                #    labels = torch.cat([graph.y_binned for graph in data]).to(device)
-                #    confidence_loss = F.cross_entropy(pred, labels)
+          
                 labels = (rmsd < args.rmsd_classification_cutoff).float()
                 if args.num_gpu == 1 and torch.cuda.is_available():
                     labels = labels.to(device)
-                #print(f'val_labels: {labels}')
-                #print(f'val_pred: {pred}')
+          
                 confidence_loss = F.binary_cross_entropy_with_logits(pred, labels.to(pred.device))
-                #try:
-                #    roc_auc = roc_auc_score(labels.detach().cpu().numpy(), pred.detach().cpu().numpy())
-                #except ValueError as e:
-                #    if 'Only one class present in y_true. ROC AUC score is not defined in that case.' in str(e):
-                #        roc_auc = 0
-                #    else:
-                #        raise e
+          
             loss = confidence_loss
-
             all_labels.append(labels.detach().cpu())
             all_pred.append(pred.detach().cpu())
             all_loss.append(loss.detach().cpu().item())
@@ -233,8 +211,11 @@ def train(train_loader, val_loader, model, writer, fold_dir, args):
             best_metrics['accuracy'] = val_accuracy
 
             best_epoch = epoch
+            if args.rmsd_prediction:
+                path_suffix = f"{num_batches}_{epoch}_{best_loss:.3f}_{best_loss:.3f}.pth"
+            else:
+                path_suffix = f"{num_batches}_{epoch}_{best_loss:.3f}_{best_metrics['accuracy']:.3f}.pth"
 
-            path_suffix = f"{num_batches}_{epoch}_{best_loss:.3f}_{best_metrics['accuracy']:.3f}.pth"
             # save model ONLY IF best
             best_path = os.path.join(fold_dir, f"model_best_{path_suffix}")
             save_model(model, args, optimizer, best_path)
@@ -248,3 +229,4 @@ def train(train_loader, val_loader, model, writer, fold_dir, args):
     # end of all epochs ========
 
     return best_loss, best_epoch, best_path
+

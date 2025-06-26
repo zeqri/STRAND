@@ -1,19 +1,17 @@
 ---
  # file is parsed by inner-most keys only
  data:
-     dataset: dips
-     data_file: datasets/DIPS/data_file.csv
-     data_path: datasets/DIPS/pairs_pruned
+     dataset: rna
      resolution: residue
      no_graph_cache: True
-     knn_size: 20
+     knn_size: 30
      use_orientation_features: False
      multiplicity: 10
  model:
      model_type: e3nn
      no_torsion: True
      no_batch_norm: True
-     lm_embed_dim: 1280
+     lm_embed_dim: 640
      dropout: 0.0
      dynamic_max_cross: True
      cross_cutoff_weight: 3
@@ -46,5 +44,5 @@
  confidence:
      use_randomized_confidence_data: False
      use_complex_rmsd: False
-     use_interface_rmsd: True
+     use_interface_rmsd: False
      rmsd_classification_cutoff: 2

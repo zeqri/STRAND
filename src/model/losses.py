@@ -32,6 +32,8 @@ class DiffusionLoss(nn.Module):
         for noise_type in ["tr", "rot", "tor"]:
             if torch.cuda.is_available() and self.args.num_gpu == 1:
                 cur_t = data.complex_t[noise_type]
+            elif not torch.cuda.is_available() :
+                cur_t = data.complex_t[noise_type]
             else:
                 cur_t = torch.cat([d.complex_t[noise_type] for d in data])
             complex_t.append(cur_t)

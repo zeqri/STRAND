@@ -1,19 +1,3 @@
-#!/bin/bash
-#SBATCH --partition=gpu-single
-#SBATCH --gres=gpu:1
-#SBATCH --nodes=1
-#SBATCH --time=00:30:00
-#SBATCH --mem=150gb 
-
-
-
-
-source /home/fr/fr_fr/fr_ma453/ENTER/bin/activate diffdock
-
-workdir=/home/fr/fr_fr/fr_ma453/folder/DiffDock-PR
-
-cd "$workdir"
-
 NUM_FOLDS=1  # number of seeds to try, default 5
 SEED=0  # initial seed
 CUDA=0  # will use GPUs from CUDA to CUDA + NUM_GPU - 1
@@ -29,8 +13,11 @@ SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 STORAGE_PATH="storage/${RUN_NAME}.pkl"
 
-FILTERING_PATH="checkpoints/confidence_model_dips/fold_0/"
-SCORE_PATH="ckpts/classic_tr_ref_aug_tr_rot_50_50/fold_0"
+FILTERING_PATH="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/ckpts_conf/conf_tr_max_0.1_rmsd_regression_30/fold_0"
+SCORE_PATH="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/ckpts/small_noise_aug_tr_max_0.1/fold_0"
+
+Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/rnapro"
+Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug.csv"
 
 
 echo SCORE_MODEL_PATH: $SCORE_PATH
@@ -55,6 +42,9 @@ python src/main_inf.py \
     --num_samples $NUM_SAMPLES \
     --prediction_storage $STORAGE_PATH \
     --knn_size 30\
+    --data_path $Data_path\
+    --data_file $Data_file\
+    --run_inference_without_confidence_model #flag to use confidence model or not
     #--entity coarse-graining-mit \
     #--debug True # load small dataset
 

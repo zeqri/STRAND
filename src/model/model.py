@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.data import Data
 
-from .diffusion import TensorProductScoreModel
+from .diffusion import TensorProductScoreModel, TensorProductScoreModelold
 from .losses import DiffusionLoss
 
 
@@ -25,7 +25,12 @@ class BaseModel(nn.Module):
 
         ######## initialize (shared) modules
         # raw encoders
-        self.encoder = TensorProductScoreModel(args, params, confidence_mode=confidence_mode)
+
+        if confidence_mode:
+            self.encoder = TensorProductScoreModelold(args, params, confidence_mode=confidence_mode)
+        else:
+            self.encoder = TensorProductScoreModel(args, params, confidence_mode=confidence_mode)
+        # self.encoder = TensorProductScoreModel(args, params, confidence_mode=confidence_mode)
 
         self._init()
 
