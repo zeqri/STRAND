@@ -93,6 +93,19 @@ class RMSDComputer():
         self.complex_rmsd_list.append(complex_rmsd)
 
         return complex_rmsd
+    
+    def update_complex_rmsd_strand(self, ligand_coors_pred, ligand_coors_true, receptor_coors_pred,receptor_coors_true):
+        complex_coors_pred = np.concatenate((receptor_coors_pred ,ligand_coors_pred), axis=0)
+        complex_coors_true = np.concatenate((receptor_coors_true,ligand_coors_true), axis=0)
+
+        R,t = rigid_transform_Kabsch_3D(complex_coors_pred.T, complex_coors_true.T)
+        complex_coors_pred_aligned = (R @ complex_coors_pred.T + t).T
+
+        complex_rmsd = compute_rmsd(complex_coors_pred_aligned, complex_coors_true)
+        self.complex_rmsd_list.append(complex_rmsd) 
+
+        return complex_rmsd
+    
 
     def update_ligand_rmsd(self, ligand_coors_pred, ligand_coors_true):
         ligand_rmsd = compute_rmsd(ligand_coors_pred, ligand_coors_true)

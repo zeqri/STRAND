@@ -1,11 +1,7 @@
 ---
  # file is parsed by inner-most keys only
  data:
-    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/af3_1022P_1022R.csv
-    #  data_path: /gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/dill_all
-    #  data_path: /gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/dill_mod_rot
-    #  data_file: /home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/af3_1022P_1022R_rot_mod.csv
-     rna_model path: /home/fr/fr_fr/fr_ma453/DiffDock-PP/RNA-FM_pretrained.pth
+
      resolution: residue
      no_graph_cache: False
      use_orientation_features: False

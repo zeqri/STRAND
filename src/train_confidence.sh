@@ -33,7 +33,7 @@ python src/main_confidence.py \
     --project "Confidence model" \
     --samples_directory $SAMPLES_DIRECTORY \
     --rmsd_prediction\
-    --checkpoint_path $SAVE_PATH \
+    # --checkpoint_path $SAVE_PATH \
     #--debug True # load small dataset
     #--entity coarse-graining-mit \
 

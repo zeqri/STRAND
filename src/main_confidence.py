@@ -31,8 +31,8 @@ def set_seed(seed):
 def main(args=None):
     print('Entering main')
     if args is None:
-        args = parse_args()
-    print(f'args.rmsd_classification_cutoff: {args.rmsd_classification_cutoff}')
+        args = parse_args() 
+    print(f'args.rmsd_classification_cutoff: {args.rmsd_classification_cutoff}') 
     if torch.cuda.is_available():
         torch.cuda.set_device(args.gpu)    
     torch.hub.set_dir(args.torchhub_path)
@@ -200,68 +200,5 @@ def main(args=None):
         # end of all folds ========
 
 
-    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # with open(f'{args.original_model_dir}/model_parameters.yml') as f:
-    #     score_model_args = Namespace(**yaml.full_load(f))
-    #     if not hasattr(score_model_args, 'separate_noise_schedule'):  # exists for compatibility
-    #         score_model_args.separate_noise_schedule = False
-    #     if not hasattr(score_model_args, 'lm_embeddings_path'):  # exists for compatibility
-    #         score_model_args.lm_embeddings_path = None
-    #     if not hasattr(score_model_args, 'all_atoms'):  # exists for compatibility
-    #         score_model_args.all_atoms = False
-    #     if not hasattr(score_model_args,'tr_only_confidence'):  # exists for compatibility
-    #         score_model_args.tr_only_confidence = True
-    #     if not hasattr(score_model_args,'high_confidence_threshold'):  # exists for compatibility
-    #         score_model_args.high_confidence_threshold = 0.0
-    #     if not hasattr(score_model_args, 'include_confidence_prediction'):  # exists for compatibility
-    #         score_model_args.include_confidence_prediction = False
-    #     if not hasattr(score_model_args, 'esm_embeddings_path'):  # exists for compatibility
-    #         score_model_args.esm_embeddings_path = None
-
-    # # construct loader
-    # train_loader, val_loader = construct_loader_filtering(args, device)
-    # model = get_model(score_model_args if args.transfer_weights else args, device, t_to_sigma=None, confidence_mode=True)
-    # optimizer, scheduler = get_optimizer_and_scheduler(args, model, scheduler_mode=args.main_metric_goal)
-
-    # if args.transfer_weights:
-    #     print("HAPPENING | Transferring weights from original_model_dir to the new model after using original_model_dir's arguments to construct the new model.")
-    #     checkpoint = torch.load(os.path.join(args.original_model_dir,args.ckpt), map_location=device)
-    #     model_state_dict = model.state_dict()
-    #     transfer_weights_dict = {k: v for k, v in checkpoint.items() if k in list(model_state_dict.keys())}
-    #     model_state_dict.update(transfer_weights_dict)  # update the layers with the pretrained weights
-    #     model.load_state_dict(model_state_dict)
-
-    # elif args.restart_dir:
-    #     dict = torch.load(f'{args.restart_dir}/last_model.pt', map_location=torch.device('cpu'))
-    #     model.module.load_state_dict(dict['model'], strict=True)
-    #     optimizer.load_state_dict(dict['optimizer'])
-    #     print("Restarting from epoch", dict['epoch'])
-
-    # numel = sum([p.numel() for p in model.parameters()])
-    # print('Model with', numel, 'parameters')
-    # run_dir = os.path.join(args.log_dir, args.run_name)
-
-    # if not args.no_train:
-    #     if args.wandb:
-    #         wandb.init(
-    #             entity='coarse-graining-mit',
-    #             settings=wandb.Settings(start_method="fork"),
-    #             project=args.project,
-    #             name=args.run_name,
-    #             config=args
-    #         )
-    #         wandb.log({'numel': numel})
-
-    #     # record parameters
-    #     yaml_file_name = os.path.join(run_dir, 'model_parameters.yml')
-    #     save_yaml_file(yaml_file_name, args.__dict__)
-    #     args.device = device
-
-    #     train(args, model, optimizer, scheduler, train_loader, val_loader, run_dir)
-
-    #if args.test:
-    #    test(args, model, val_loader, run_dir, multiplicity=args.multiplicity_test)
-
-    
 if __name__ == '__main__':
     main()
