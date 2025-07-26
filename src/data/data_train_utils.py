@@ -11,7 +11,7 @@ import esm
 import csv
 import time
 from tqdm import tqdm
-
+from Bio.Data.IUPACData import protein_letters_3to1
 import numpy as np
 import torch
 import torch.nn as nn

@@ -8,9 +8,7 @@
 **.out
 **.log
 **.log
-**.sh
 **.out
-**.sh
 **.nfs*
 
 __pycache__

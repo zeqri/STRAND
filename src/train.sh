@@ -11,9 +11,12 @@ CONFIG="config/${NAME}.yaml"
 SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 
+# Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/rnapro"
+# Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/train.csv"
 
-Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/rnapro"
-Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/train.csv"
+Data_path="datasets/train/af3_1022P_1022R_aug"
+Data_file="datasets/train/af3_1022P_1022R_aug.csv"
+
 
 echo SAVE_PATH: $SAVE_PATH
 
@@ -38,9 +41,6 @@ python src/main.py \
     --recache \
     --data_path $Data_path\
     --data_file $Data_file\
-
-    # --data_file "/home/fr/fr_fr/fr_ma453/folder/DiffDock-PR/datasets/af3/af3_1022P_1022R_rot_mod.csv"\
-    # --data_path "/gpfs/bwfor/work/ws/fr_ma453-data_alpha_fold/dill_mod_rot"\
 
 
     # --recache \

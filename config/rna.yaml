@@ -36,6 +36,5 @@
      rot_s_min: 0.01
      rot_s_max: 1.65 
      sample_train: True
-     #num_inference_complexes_train_data: 1200
      num_inference_complexes_train_data: 100
      
