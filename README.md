@@ -1,26 +1,22 @@
 # STRAND  
 RNA-Protein Complex Refinement via Diffusion
 
-**Note:** This repository is currently under development.  
-The complete code will be made publicly available upon the acceptance or publication of the associated research paper. 
+# Installation 
 
-
-# Data Preprocessing
-
-Download PDB files containing RNA-protein complexe before the cutoff date 30.Sept.2021 
-
-All the data must be stored as dill files, to do so run:
+clone the repo
 
 ```
-python src/data/preprocessing/cache_data.py --dir_path dir_path_containing_pdb_file --save_path datasets/train
-```
-
-Strand tr+rot utalized data augmentation during training, to augment the data run:
+git clone https://github.com/zeqri/STRAND.git
 
 ```
-sh src/data/preprocessing/data_aug.sh
+
 
 ```
+conda create -n STRAND python=3.9.18
+conda activate STRAND
+pip install -r requirements.txt
+```
+
 
 
 # Training 
@@ -53,7 +49,7 @@ sh src/train.sh
 
 **Generate samples:**
 
-After obtaining an optimised SCORE MODEL, use it to generate sampoles via:
+After obtaining an optimised SCORE MODEL, use it to generate samples via:
 
 ```
 sh src/generate_samples.sh
@@ -74,13 +70,9 @@ sh src/train_confidence.sh
 
 # Inference 
 
-Store the structurs to be refined as dill files using `src/data/preprocessing/cache_data.py`.
+Store the structures to be refined as dill files using `src/data/preprocessing/cache_data.py`.
 
 Specify the path of the stored data set to be refined and it's corrosponding csv file in the variables `Data_path` and `Data_path` respectively in the file `src/train_confidence.sh`.
-
-
-
-**Manual Selection results:**
 
 
 Set `--run_inference_without_confidence_model` to be True to run the inference without the confidence model. 
@@ -92,13 +84,40 @@ sh src/inference.sh
 ```
 
 
-
-**Selection via confidence model:** 
-
-
 Set `--run_inference_without_confidence_model` to be False to run the inference without the confidence model. 
 
 ```
 sh src/inference.sh
 
 ```
+
+
+After running the inference visualization directories are created containing the generated samples. Defualt path is `visualization/STRAND`
+
+To assess how well the refined samples are, Downdload the Ground Truth files that were refined from the PDB as .pdb and store them in`datasets/gt_dir`
+
+
+**Manual Selection results:** 
+
+To display manual selection results run:
+
+
+
+```
+python src/visualize_inf_manual.py  --gt_path datasets/gt_dir --samples_path visualization/STRAND
+
+```
+
+
+**Selection via confidence model:** 
+
+
+To display the confidence model selection results run:
+
+
+
+```
+python src/visualize_inf_conf.py  --gt_path datasets/gt_dir --samples_path visualization/STRAND
+
+```
+

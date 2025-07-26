@@ -6,7 +6,7 @@ BATCH_SIZE=1  # split across all GPUs
 NUM_SAMPLES=40
 
 NAME="rna_inf"  # change to name of config file
-RUN_NAME="test_large_model_dips"
+RUN_NAME="STRAND"
 CONFIG="config/${NAME}.yaml"
 
 SAVE_PATH="ckpts/${RUN_NAME}"
@@ -35,7 +35,7 @@ python src/main_inf.py \
     --gpu $CUDA --seed $SEED \
     --logger "wandb" \
     --project "DiffDock Tuning" \
-    --visualize_n_val_graphs 0 \
+    --visualize_n_val_graphs 100 \
     --visualization_path $VISUALIZATION_PATH \
     --filtering_model_path $FILTERING_PATH \
     --score_model_path $SCORE_PATH \

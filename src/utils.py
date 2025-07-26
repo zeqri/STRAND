@@ -8,6 +8,7 @@ from collections import defaultdict
 import time
 from datetime import datetime
 
+from fpdf import FPDF
 import numpy as np
 import torch
 import torch.nn as nn
@@ -180,98 +181,102 @@ def compute_rmsd(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     return dist
 
 
-def compute_metrics(true, pred):
+
+def create_rmsd_report(complex_rmsd_values, min_rmsd_values, output_path="rmsd_report.pdf"):
     """
-        this function needs to be overhauled
-
-        these lists are JAGGED IFF as_sequence=True
-        @param pred (n, sequence, 1) preds for prob(in) where in = 1
-        @param true (n, sequence, 1) targets, binary vector
+    Create a PDF report containing RMSD statistics.
+    
+    Parameters:
+    complex_rmsd_values (list): List of complex RMSD values
+    min_rmsd_values (list): List of minimum RMSD values
+    plot_label (str): Label for the plot/analysis
+    output_path (str): Path where to save the PDF
     """
-    # metrics depend on task
-    as_sequence = type(true[0]) is list
-    if as_sequence:
-        f_metrics = {
-            "roc_auc": _compute_roc_auc,
-            "prc_auc": _compute_prc_auc
-        }
-    else:
-        as_classification = (type(true[0]) == torch.Tensor
-                             and true[0].dtype == torch.long)
-        if as_classification:
-            f_metrics = {
-                "topk_accuracy": _compute_topk
-            }
-        else:
-            f_metrics = {
-                "mse": _compute_mse,
-            }
-    scores = defaultdict(list)
-    for key, f in f_metrics.items():
-        if as_sequence:
-            for t,p in zip(true, pred):
-                scores[key].append(f(t, p))
-            scores[key] = np.mean(scores[key])
-        else:
-            if as_classification:
-                topk = f(true, pred)
-                ks = [1, 5, 10]
-                for i,val in enumerate(topk):
-                    scores[f"{key}_{ks[i]}"] = val
-            else:
-                scores[key] = f(true, pred)
-    return scores
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 15)
+            self.cell(0, 10, 'RMSD Analysis Report', 0, 1, 'C')
+            self.ln(10)
+        
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
-
-def _compute_roc_auc(true, pred):
-    try:
-        return metrics.roc_auc_score(true, pred)
-    except:
-        # single target value
-        return 0.5
-
-
-def _compute_prc_auc(true, pred):
-    if true.sum() == 0:
-        return 0.5
-    precision, recall, _ = metrics.precision_recall_curve(true, pred)
-    prc_auc = metrics.auc(recall, precision)
-    return prc_auc
-
-
-def _compute_mse(true, pred):
-    # technically order doesn't matter but "input" then "target"
-    true, pred = torch.tensor(true), torch.tensor(pred)
-    return F.mse_loss(pred, true).item()
-
-
-def _compute_topk(true, pred, topk=[1, 5, 10]):
-    """
-        @param (list)  topk
-    """
-    if type(true) is list:
-        true, pred = torch.stack(true), torch.stack(pred)
-    true, pred = true.cpu().numpy(), pred.cpu().numpy()
-    labels = np.arange(pred.shape[-1])
-    topk_accs = []
-    for k in topk:
-        # NOTE this does not handle duplicates.
-        # "correct" predictions are sorted by index
-        acc = metrics.top_k_accuracy_score(true, pred, k=k, labels=labels)
-        topk_accs.append(acc)
-    return topk_accs
-
-
-if __name__ == "__main__":
-
-    # test topk
-    true = torch.arange(5)
-    pred = torch.eye(5)
-    topk = _compute_topk(true, pred, topk=[1,3,5])
-    print(topk)
-
-    true = torch.arange(4) + 1
-    pred = torch.eye(5)[:4]
-    topk = _compute_topk(true, pred, topk=[1,3,4])
-    print(topk)
-
+    # Create PDF object
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Add title and date
+    pdf.set_font('Arial', 'B', 12)
+    # pdf.cell(0, 10, f"Analysis Results - {plot_label}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Analysis Results", 0, 1, 'L')
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, 'L')
+    pdf.ln(10)
+    
+    # Basic Statistics
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, "Basic Statistics", 0, 1, 'L')
+    pdf.set_font('Arial', '', 10)
+    
+    # Calculate statistics
+    count = sum(min_rmsd < complex_rmsd for min_rmsd, complex_rmsd in zip(min_rmsd_values, complex_rmsd_values))
+    total_complex = len(complex_rmsd_values)
+    overall_percentage_change = ((np.mean(complex_rmsd_values) - np.mean(min_rmsd_values)) / np.mean(complex_rmsd_values)) * 100
+    
+    statistics = [
+        f"Number of min RMSD less than complex RMSD: {count}",
+        f"Number of total complex calculated: {total_complex}",
+        f"Overall Percentage Change in mean value: {overall_percentage_change:.2f}%",
+        f"Mean complex RMSD: {np.mean(complex_rmsd_values):.2f}",
+        f"Median complex RMSD: {np.median(complex_rmsd_values):.2f}",
+        f"Mean strand RMSD: {np.mean(min_rmsd_values):.2f}",
+        f"Median strand RMSD: {np.median(min_rmsd_values):.2f}"
+    ]
+    
+    for stat in statistics:
+        pdf.cell(0, 8, stat, 0, 1, 'L')
+    pdf.ln(10)
+    
+    # Complex RMSD Analysis
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, "Complex RMSD Analysis", 0, 1, 'L')
+    pdf.set_font('Arial', '', 10)
+    
+    below_10 = [value for value in complex_rmsd_values if value < 10]
+    below_5 = [value for value in complex_rmsd_values if value < 5]
+    below_2 = [value for value in complex_rmsd_values if value < 2]
+    
+    complex_stats = [
+        f"Percentage below 10Å: {(len(below_10) / len(complex_rmsd_values)) * 100:.2f}%",
+        f"Percentage below 5Å: {(len(below_5) / len(complex_rmsd_values)) * 100:.2f}%",
+        f"Percentage below 2Å: {(len(below_2) / len(complex_rmsd_values)) * 100:.2f}%"
+    ]
+    
+    for stat in complex_stats:
+        pdf.cell(0, 8, stat, 0, 1, 'L')
+    pdf.ln(10)
+    
+    # Strand RMSD Analysis
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, "Strand RMSD Analysis", 0, 1, 'L')
+    pdf.set_font('Arial', '', 10)
+    
+    below_10 = [value for value in min_rmsd_values if value < 10]
+    below_5 = [value for value in min_rmsd_values if value < 5]
+    below_2 = [value for value in min_rmsd_values if value < 2]
+    
+    strand_stats = [
+        f"Percentage below 10Å: {(len(below_10) / len(min_rmsd_values)) * 100:.2f}%",
+        f"Percentage below 5Å: {(len(below_5) / len(min_rmsd_values)) * 100:.2f}%",
+        f"Percentage below 2Å: {(len(below_2) / len(min_rmsd_values)) * 100:.2f}%"
+    ]
+   
+    for stat in strand_stats:
+        pdf.cell(0, 8, stat, 0, 1, 'L')
+    
+    # Save the PDF
+    pdf.output(output_path)
+    print(f"Report saved to {output_path}")

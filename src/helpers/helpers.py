@@ -25,7 +25,7 @@ def extract_pdb_data(pdb_file):
     for model in structure:
         for chain in model:
             for residue in chain:
-                if residue.get_resname().strip() in ["A", "C", "G", "U", "T"]:
+                if residue.get_resname().strip() in ["A", "C", "G", "U"]:
                     rna_atoms = [(atom.get_name(), residue.get_resname().strip(), residue.get_id()[1], "rna", chain.get_id(), atom.get_coord()[0], atom.get_coord()[1], atom.get_coord()[2], atom.element) for atom in residue]
                     data["atom_name"].extend([atom[0] for atom in rna_atoms])
                     data["resname"].extend([atom[1] for atom in rna_atoms])
@@ -54,6 +54,7 @@ def extract_pdb_data(pdb_file):
         return None
     
     data=pd.DataFrame(data)    
+
 
     return data 
 
