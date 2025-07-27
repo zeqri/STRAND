@@ -76,10 +76,10 @@ class NoiseTransform(BaseTransform):
             data["ligand"].pos
             @param (torch_geometric.data.HeteroData) data
         """
-        com = torch.mean(data["ligand"].pos, dim=0, keepdim=True)
-        rot_mat = axis_angle_to_matrix(rot_update.squeeze())
+        
+        
         rigid_new_pos = (
-            (data["ligand"].pos - com) @ rot_mat.T + tr_update + com
+            data["ligand"].pos  + tr_update 
         )
 
         if tor_updates is not None:
