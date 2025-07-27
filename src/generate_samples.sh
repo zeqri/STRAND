@@ -14,12 +14,13 @@ CONFIG="config/${NAME}.yaml"
 # you may save to your own directory
 # SAVE_PATH="ckpts/${RUN_NAME}"
 
-SAVE_PATH="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/ckpts/small_noise_aug_tr_max_0.1/fold_0"
-SAMPLES_DIRECTORY="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/samples"
+SAVE_PATH="ckpts/STRAND_TR_ROT/fold_0" 
+SAMPLES_DIRECTORY="samples"
 
 echo SAVE_PATH: $SAVE_PATH
-Data_Path="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/datasets/RNAPRO/rna_pro_Dill"
-Data_File="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/train.csv"
+
+Data_path="datasets/train/af3_1022P_1022R_aug"
+Data_file="datasets/train/af3_1022P_1022R_aug.csv"
 
 python src/main_generate_samples.py \
     --config_file $CONFIG \

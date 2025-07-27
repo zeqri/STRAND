@@ -5,14 +5,12 @@ NUM_GPU=1
 BATCH_SIZE=12  # split across all GPUs
 
 NAME="rna"  # change to name of config file
-RUN_NAME="train" # should uniauely describe the current experiment
+RUN_NAME="STRAND_TR_ROT" # should uniauely describe the current experiment
 CONFIG="config/${NAME}.yaml"
 
 SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 
-# Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/rnapro"
-# Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/train.csv"
 
 Data_path="datasets/train/af3_1022P_1022R_aug"
 Data_file="datasets/train/af3_1022P_1022R_aug.csv"

@@ -13,11 +13,11 @@ SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 STORAGE_PATH="storage/${RUN_NAME}.pkl"
 
-FILTERING_PATH="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/ckpts_conf/conf_tr_max_0.1_rmsd_regression_30/fold_0"
-SCORE_PATH="/Users/muhsenalzzaqry/Desktop/DiffDock-PR/ckpts/small_noise_aug_tr_max_0.1/fold_0"
+FILTERING_PATH="models/conf_tr_max_0.1_rmsd_regression_30/fold_0" #trained models 
+SCORE_PATH="models/small_noise_aug_tr_max_0.1/fold_0" #trained models
 
-Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/rnapro"
-Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug.csv"
+Data_path="datasets/test_data/rnapor/prediction"
+Data_file="datasets/test_data/rnapor/rnapro.csv"
 
 
 echo SCORE_MODEL_PATH: $SCORE_PATH
