@@ -240,11 +240,8 @@ def randomize_position(data_list, args):
         pos = complex_graph["ligand"].pos
         center = torch.mean(pos, dim=0, keepdim=True)
         random_rotation = torch.from_numpy(R.random().as_matrix())
-        pos = (pos - center) @ random_rotation.T.float()
+        pos = (pos - center) @ random_rotation.T.float() + center 
 
-        # random translation
-        tr_update = torch.normal(0, args.tr_s_max, size=(1, 3))
-        pos = pos + tr_update
         complex_graph["ligand"].pos = pos
         data_list.set_graph(i, complex_graph)
 

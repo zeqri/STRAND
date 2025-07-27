@@ -123,23 +123,14 @@ class DiffusionLoss(nn.Module):
                                             dtype=torch.float)
 
         # compile and re-weight losses
-        loss = tr_loss * self.tr_weight
         loss = loss + rot_loss * self.rot_weight
-        if not no_torsion:
-            loss = loss + tor_loss * self.tor_weight
 
         losses = {
             "loss": loss,
-            "tr_loss": tr_loss,
             "rot_loss": rot_loss,
-            "tr_base_loss": tr_base_loss,
             "rot_base_loss": rot_base_loss,
         }
-        if not no_torsion:
-            losses.update({
-                "tor_loss": tor_loss,
-                "tor_base_loss": tor_base_loss
-            })
+        
 
         return losses
 
