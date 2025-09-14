@@ -24,13 +24,12 @@ class BaseModel(nn.Module):
         self.args = args
 
         ######## initialize (shared) modules
-        # raw encoders
-
         if confidence_mode:
             self.encoder = TensorProductScoreModelold(args, params, confidence_mode=confidence_mode)
-        else:
+        elif args.translation and args.rotation and not args.torsion: #if tr + rotation use the new model
             self.encoder = TensorProductScoreModel(args, params, confidence_mode=confidence_mode)
-        # self.encoder = TensorProductScoreModel(args, params, confidence_mode=confidence_mode)
+        else:
+            self.encoder = TensorProductScoreModelold(args, params, confidence_mode=confidence_mode)
 
         self._init()
 

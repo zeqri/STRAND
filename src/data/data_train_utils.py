@@ -18,6 +18,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_cluster import knn_graph
 from torch_geometric.data import HeteroData
+import networkx as nx
+from torch_geometric.utils import to_networkx 
 
 from scipy.spatial.transform import Rotation
 
@@ -111,9 +113,7 @@ class Loader:
         elif self.args.resolution == "backbone":
             atoms_to_keep = ["N", "CA", "O", "CB"]
         elif self.args.resolution == "residue":
-            # atoms_to_keep = ["CA"]
             atoms_to_keep = ["CA","P"]
-            # atoms_to_keep = ["CA","P","N1","N9","C1'"]
             
         else:
             raise Exception(f"invalid resolution {self.args.resolution}")
@@ -239,7 +239,7 @@ class Loader:
         for item in data.values():
 
             if "ligand" not in item.keys() or "receptor" not in item.keys() :
-                
+   
                 print(item["pdb_id"])
 
             item["graph"] = self.to_graph(item)
@@ -275,6 +275,8 @@ class Loader:
 
         return data, data_params
 
+    
+
     def to_graph(self, item):
         """
             Convert raw dictionary to PyTorch geometric object
@@ -282,9 +284,7 @@ class Loader:
         data = HeteroData()
         data["name"] = item["path"]
         # retrieve position and compute kNN
-        for key in ["receptor", "ligand"]:
-       
-      
+        for key in ["ligand","receptor"]:    
             data[key].pos = item[f"{key}_xyz"].float()
             data[key].x = item[f"{key}_seq"]  # _seq is residue id
             if self.args.use_orientation_features:
@@ -292,8 +292,21 @@ class Loader:
                 data[key].u_i_feat = item[f"{key}_u_i_feat"].float()
                 data[key].v_i_feat = item[f"{key}_v_i_feat"].float()
             # kNN graph
-            edge_index = knn_graph(data[key].pos, self.args.knn_size)
-            data[key, "contact", key].edge_index = edge_index
+            if  not self.args.torsion: 
+                edge_index = knn_graph(data[key].pos, self.args.knn_size)
+                data[key, "contact", key].edge_index = edge_index 
+
+            else: 
+                if key=="receptor":  
+                   edge_index=knn_graph(data[key].pos, self.args.knn_size) 
+                   data[key, "contact", key].edge_index = edge_index # Knn can be used instead
+                else:
+                   edge_index= create_ligand_graph(data[key].pos) # this has to be used to create the mask         
+                   data[key, "contact", key].edge_index = edge_index # Knn can be used instead
+                   mask_edges, mask_rotate = get_transformation_mask(data)
+                   data[key].edge_mask = torch.tensor(mask_edges)
+                   data[key].mask_rotate = mask_rotate 
+                    
         # center receptor at origin
         center = data["receptor"].pos.mean(dim=0, keepdim=True)
         for key in ["receptor", "ligand"]:
@@ -301,7 +314,6 @@ class Loader:
         data.center = center  # save old center
         return data
 
-   
 
     def compute_embeddings(self, data):
         """
@@ -576,15 +588,11 @@ class Loader:
                        data["y"].extend([atom[6] for atom in protein_atoms])
                        data["z"].extend([atom[7] for atom in protein_atoms])
                        data["element"].extend([atom[8] for atom in protein_atoms])
-                  
-            
-    
+                
     # Convert the data into a DataFrame
-        df = pd.DataFrame(data)
-
-    
+        df = pd.DataFrame(data)    
         return df
-    
+
     def parse_df(self,df):
         """
             Parse PDB DataFrame
@@ -839,3 +847,61 @@ def split_tensor(tensor, max_length):
         chunks.append(tensor[:, start:end])
     
     return chunks
+
+
+
+def create_ligand_graph(ligand_pos):
+    
+    row, col = [], []
+    N = ligand_pos.shape[0]
+    
+    for i in range(0, N):
+        if i + 1 < N:  # Ensure we don't access out-of-bounds indices
+            row += [i, i + 1]
+            col += [i + 1, i]
+    
+    edge_index = torch.tensor([row, col], dtype=torch.long)
+    
+    return edge_index
+
+
+
+def get_transformation_mask(pyg_data):
+    """
+    Computes masks for torsion angle transformations.
+
+    Args:
+        pyg_data: PyTorch Geometric HeteroData object containing the molecular graph.
+
+    Returns:
+        mask_edges: Boolean array indicating which edges allow rotation.
+        mask_rotate: Boolean array where each row corresponds to a set of atoms that should be rotated.
+    """
+    G = nx.Graph(to_networkx(pyg_data.to_homogeneous(), to_undirected=False))
+    to_rotate = []
+    
+    edges = pyg_data['ligand', 'contact', 'ligand'].edge_index.T.numpy()
+    
+    for i in range(edges.shape[0]):
+        u, v = edges[i]  # Edge direction: u → v
+        G2 = G.copy()
+        G2.remove_edge(u, v)
+
+        if not nx.is_connected(G2):
+            # Get the smallest connected component after removing edge (u, v)
+            smallest_component = min(nx.connected_components(G2), key=len)
+            to_rotate.append(smallest_component if v in smallest_component else [])
+        else:
+            to_rotate.append([])  # Edge removal did not break connectivity → no rotation
+
+    # Convert rotation lists into boolean masks
+    mask_edges = np.array([bool(l) for l in to_rotate], dtype=bool)
+    mask_rotate = np.zeros((np.sum(mask_edges), len(G.nodes())), dtype=bool)
+
+    idx = 0
+    for i, l in enumerate(to_rotate):
+        if mask_edges[i]:  # Only store non-empty rotations
+            mask_rotate[idx, list(l)] = True
+            idx += 1
+
+    return mask_edges, mask_rotate

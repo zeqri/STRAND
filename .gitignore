@@ -3,6 +3,7 @@
 **.pkl
 **.npy
 **.pdb
+**.vscode
 **.DS_Store
 **.dill
 **.out

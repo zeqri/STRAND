@@ -336,9 +336,18 @@ def parse_args():
     parser.add_argument("--tor_s_max",
                         type=float, default=3.14,
                         help="Max sigma for torsional component")
-    parser.add_argument("--no_torsion", action="store_true", default=False,
-                        help="If set only rigid matching")
-
+    parser.add_argument("--torsion",
+                        type=lambda x: (str(x).lower() == 'true'),
+                        default=True,
+                        help="Enable or disable torsion" )
+    parser.add_argument("--translation",
+                        type=lambda x: (str(x).lower() == 'true'),
+                        default=True,
+                        help="Enable or disable translation")
+    parser.add_argument("--rotation",
+                        type=lambda x: (str(x).lower() == 'true'),
+                        default=True,
+                        help="Enable or disable rotation") 
     # confidence model
     parser.add_argument('--rmsd_prediction', action='store_true', 
                         default=False, 

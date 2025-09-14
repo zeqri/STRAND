@@ -14,10 +14,15 @@ VISUALIZATION_PATH="visualization/${RUN_NAME}"
 STORAGE_PATH="storage/${RUN_NAME}.pkl"
 
 FILTERING_PATH="models/conf_tr_max_0.1_rmsd_regression_30/fold_0" #trained models 
-SCORE_PATH="models/small_noise_aug_tr_max_0.1/fold_0" #trained models
+SCORE_PATH="models/small_noise_aug_tr_max_0.1/fold_0" #trained models 
 
-Data_path="datasets/test_data/rnapor/prediction"
-Data_file="datasets/test_data/rnapor/rnapro.csv"
+
+# Data_path="datasets/test_data/rnapor/prediction"
+# Data_file="datasets/test_data/rnapor/rnapro.csv"
+
+
+Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug"
+Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug.csv"
 
 
 echo SCORE_MODEL_PATH: $SCORE_PATH
@@ -44,7 +49,8 @@ python src/main_inf.py \
     --knn_size 30\
     --data_path $Data_path\
     --data_file $Data_file\
-    --run_inference_without_confidence_model #flag to use confidence model or not
+    --torsion True\
+    # --run_inference_without_confidence_model #flag to use confidence model or not
     #--entity coarse-graining-mit \
     #--debug True # load small dataset
 

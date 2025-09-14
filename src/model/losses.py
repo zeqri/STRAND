@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
-from geom_utils import NoiseSchedule, score_norm
-
+from geom_utils import NoiseSchedule, score_norm ,torus
 
 class DiffusionLoss(nn.Module):
     def __init__(self, args):
@@ -11,12 +11,17 @@ class DiffusionLoss(nn.Module):
         self.args = args
         self.tr_weight = args.tr_weight
         self.rot_weight = args.rot_weight
-        self.tor_weight = args.tor_weight
+        self.tor_weight = args.tor_weight 
+
+        self.translation=args.translation
+        self.rotation=args.rotation
+        self.torsion=args.torsion
+
         self.noise_schedule = NoiseSchedule(args)
         self.eps = 1e-5
 
     def forward(self, data, outputs,
-                apply_mean=True, no_torsion=True):
+                apply_mean=True):
         """
             @param (dict) outputs
             @param (torch_geometric.data.HeteroData) data
@@ -32,7 +37,7 @@ class DiffusionLoss(nn.Module):
         for noise_type in ["tr", "rot", "tor"]:
             if torch.cuda.is_available() and self.args.num_gpu == 1:
                 cur_t = data.complex_t[noise_type]
-            elif not torch.cuda.is_available() :
+            elif not torch.cuda.is_available() : #for macbooks
                 cur_t = data.complex_t[noise_type]
             else:
                 cur_t = torch.cat([d.complex_t[noise_type] for d in data])
@@ -65,19 +70,20 @@ class DiffusionLoss(nn.Module):
         )
         rot_base_loss = ((rot_score / rot_score_norm) ** 2).mean(dim=mean_dims).detach()
 
-        # torsion component
-        if not no_torsion:
+        if  self.torsion:
+            tor_score = (
+                torch.cat([d.tor_score for d in data], dim=0)
+                if device.type == "cuda" and self.args.num_gpu > 1
+                else data.tor_score.cpu()
+            ) 
+   
+
             edge_tor_s = torch.from_numpy(
                 np.concatenate(
                     [d.tor_s_edge for d in data]
-                    if device.type == "cuda"
+                    if device.type == "cuda" and self.args.num_gpu > 1
                     else data.tor_s_edge
                 )
-            )
-            tor_score = (
-                torch.cat([d.tor_score for d in data], dim=0)
-                if device.type == "cuda"
-                else data.tor_score
             )
             tor_score_norm2 = torch.tensor(
                 torus.score_norm(edge_tor_s.cpu().numpy())
@@ -96,12 +102,12 @@ class DiffusionLoss(nn.Module):
                             for i, d in enumerate(data)
                         ]
                     ).long()
-                    if device.type == "cuda"
+                    if device.type == "cuda" and self.args.num_gpu > 1
                     else data["ligand"].batch[
                         data["ligand", "ligand"].edge_index[0][data["ligand"].edge_mask]
                     ]
                 )
-                num_graphs = len(data) if device.type == "cuda" else data.num_graphs
+                num_graphs = len(data) if device.type == "cuda"  and self.args.num_gpu > 1 else data.num_graphs
                 t_l, t_b_l, c = (
                     torch.zeros(num_graphs),
                     torch.zeros(num_graphs),
@@ -112,7 +118,7 @@ class DiffusionLoss(nn.Module):
                 t_l.index_add_(0, index, tor_loss)
                 t_b_l.index_add_(0, index, tor_base_loss)
                 tor_loss, tor_base_loss = t_l / c, t_b_l / c
-        else:
+        else: 
             if apply_mean:
                 tor_loss = torch.zeros(1, dtype=torch.float)
                 tor_base_loss = torch.zeros(1, dtype=torch.float)
@@ -122,24 +128,53 @@ class DiffusionLoss(nn.Module):
                 tor_base_loss = torch.zeros(len(rot_loss),
                                             dtype=torch.float)
 
-        # compile and re-weight losses
-        loss = tr_loss * self.tr_weight
-        loss = loss + rot_loss * self.rot_weight
-        if not no_torsion:
-            loss = loss + tor_loss * self.tor_weight
 
-        losses = {
+      
+        if self.translation and not self.rotation and not self.torsion: #translation
+            loss = tr_loss * self.tr_weight
+            losses = {
+            "loss": loss,
+            "tr_loss": tr_loss,
+            "tr_base_loss": tr_base_loss,
+            } 
+        
+        elif not self.translation and  self.rotation and not self.torsion: # rotation
+            loss = loss + rot_loss * self.rot_weight
+            losses = {
+            "loss": loss,
+            "rot_loss": rot_loss,
+            "rot_base_loss": rot_base_loss,
+            }
+
+        elif not self.translation and not self.rotation and self.torsion: # rotation
+            loss =  tor_loss * self.tor_weight
+            losses = {
+            "loss": loss,
+            "tor_loss": tor_loss,
+            "tor_base_loss": tor_base_loss,
+            }    
+
+        elif self.translation and  self.rotation and not self.torsion: # 
+            loss = tr_loss * self.tr_weight + rot_loss * self.rot_weight
+            losses = {
             "loss": loss,
             "tr_loss": tr_loss,
             "rot_loss": rot_loss,
             "tr_base_loss": tr_base_loss,
             "rot_base_loss": rot_base_loss,
         }
-        if not no_torsion:
-            losses.update({
-                "tor_loss": tor_loss,
-                "tor_base_loss": tor_base_loss
-            })
-
+            
+        elif self.translation and  self.rotation and self.torsion:
+            loss = tr_loss * self.tr_weight + rot_loss * self.rot_weight+ tor_loss * self.tor_weight
+            losses = {
+            "loss": loss,
+            "tr_loss": tr_loss,
+            "rot_loss": rot_loss,
+            "tor_loss": tor_loss,
+            "tr_base_loss": tr_base_loss,
+            "rot_base_loss": rot_base_loss,
+            "tor_base_loss": tor_base_loss,
+           }
+                     
         return losses
 

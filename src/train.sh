@@ -12,9 +12,11 @@ SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 
 
-Data_path="datasets/train/af3_1022P_1022R_aug"
-Data_file="datasets/train/af3_1022P_1022R_aug.csv"
+# Data_path="datasets/train/af3_1022P_1022R_aug"
+# Data_file="datasets/train/af3_1022P_1022R_aug.csv"
 
+Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug"
+Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug_train.csv"
 
 echo SAVE_PATH: $SAVE_PATH
 
@@ -39,6 +41,9 @@ python src/main.py \
     --recache \
     --data_path $Data_path\
     --data_file $Data_file\
+    --translation True\
+    --rotation True\
+    --torsion True\
 
 
     # --recache \

@@ -24,8 +24,7 @@ def load_model(args, model_params, fold, load_best=True, confidence_mode = False
         model_args = yaml.safe_load(f)
     model_args = Dict2Class(model_args)
     model_args.gpu = args.gpu
-    model_args.num_gpu = args.num_gpu
-
+    model_args.num_gpu = args.num_gpu 
 
     # load model with specified arguments
     kwargs = {}

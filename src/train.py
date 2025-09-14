@@ -72,6 +72,7 @@ def train(train_loader, val_loader, model,
             torch.cuda.empty_cache()
 
             # forward pass
+    
             try:
                 output = model(batch)
                 # compute loss (modifies output in place)
@@ -313,6 +314,7 @@ def evaluate(val_loader, model, writer, args,
                 printt("Skipping to pose")
                 break
             # model predictions
+    
             try:
                 output = model(batch)
                 if args.num_gpu > 1:

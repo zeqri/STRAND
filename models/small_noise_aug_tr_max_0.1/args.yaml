@@ -115,3 +115,7 @@ visualize_n_val_graphs: 10
 wandb_run_name: null
 wandb_sweep: false
 weight_decay: 0.0
+translation: true
+rotation: true 
+torsion: false
+ 

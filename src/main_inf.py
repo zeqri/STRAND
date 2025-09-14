@@ -84,7 +84,7 @@ def main(args=None):
 
     if args is None:
         args = parse_args()
-    print(args)
+    print(args.translation)
     if torch.cuda.is_available():
         torch.cuda.set_device(args.gpu)
     torch.hub.set_dir(args.torchhub_path)

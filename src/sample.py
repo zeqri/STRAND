@@ -106,28 +106,46 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
             rot_scale = torch.sqrt(
                     torch.log(torch.tensor(args.rot_s_max /
                                            args.rot_s_min)))
-            rot_g = 2 * rot_s * rot_scale
+            rot_g = 2 * rot_s * rot_scale 
+
+            if args.torsion: 
+                tor_scale = torch.sqrt(
+                    torch.log(torch.tensor(args.tor_s_max /
+                                           args.tor_s_min)))
+                tor_g = 2 * tor_s * tor_scale
+
 
             # actual update
             if args.ode:
                 tr_update = (0.5 * tr_g**2 * dt * tr_score)
                 rot_update = (0.5 * rot_score * dt * rot_g**2)
+                tor_update = (0.5 * tor_score * dt * tor_g**2)  
             else:
                 if args.no_final_noise and t_idx == args.num_steps-1:
                     tr_z = torch.zeros((batch_size, 3))
                     rot_z = torch.zeros((batch_size, 3))
+                    if args.torsion:
+                        tor_z= torch.zeros(( tor_score.shape)) 
                 elif args.no_random:
                     tr_z = torch.zeros((batch_size, 3))
                     rot_z = torch.zeros((batch_size, 3))
+                    if args.torsion:
+                        tor_z = torch.zeros(( tor_score.shape))    
                 else:
                     tr_z = torch.normal(0, 1, size=(batch_size, 3))
                     rot_z = torch.normal(0, 1, size=(batch_size, 3))
+                    if args.torsion:
+                        tor_z = torch.normal(0, 1, size=( tor_score.shape))    
 
                 tr_update = (tr_g**2 * dt * tr_score)
                 tr_update = tr_update + (tr_g * np.sqrt(dt) * tr_z)
 
                 rot_update = (rot_score * dt * rot_g**2)
                 rot_update = rot_update + (rot_g * np.sqrt(dt) * rot_z)
+
+                if args.torsion:
+                    tor_update = (tor_score * dt * tor_g**2)    
+                    tor_update = tor_update + (tor_g * np.sqrt(dt) * tor_z)
 
             if args.temp_sampling != 1.0:
                 tr_sigma_data = np.exp(args.temp_sigma_data_tr * np.log(args.tr_s_max) + (1 - args.temp_sigma_data_tr) * np.log(args.tr_s_min))
@@ -138,11 +156,27 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
                 lambda_rot = (rot_sigma_data + rot_s) / (rot_sigma_data + rot_s / args.temp_sampling)
                 rot_update = (rot_g ** 2 * dt * (lambda_rot + args.temp_sampling * args.temp_psi / 2) * rot_score.cpu() + rot_g * np.sqrt(dt * (1 + args.temp_psi)) * rot_z).cpu()
 
+                if args.torsion:
+                    tor_sigma_data = np.exp(args.temp_sigma_data_tor * np.log(args.tor_s_max) + (1 - args.temp_sigma_data_tor) * np.log(args.tor_s_min))
+                    lambda_tor = (tor_sigma_data + tor_s) / (tor_sigma_data + tor_s / args.temp_sampling)
+                    tor_update = (tor_g ** 2 * dt * (lambda_tor + args.temp_sampling * args.temp_psi / 2) * tor_score.cpu() + tor_g * np.sqrt(dt * (1 + args.temp_psi)) * tor_z).cpu()
+
             # apply transformations
             if type(complex_graphs) is not list:
                 complex_graphs = complex_graphs.to("cpu").to_data_list()
             for i, data in enumerate(complex_graphs):
-                new_graph = transform.apply_updates(data,
+
+
+                if args.torsion: 
+                    new_graph = transform.apply_updates(data,
+                        tr_update[i:i+1],
+                        rot_update[i:i+1].squeeze(0),
+                        tor_update.detach().cpu().numpy()
+    
+                        # tor_update[i:i+1].squeeze(0)
+                        )
+                else:
+                    new_graph = transform.apply_updates(data,
                         tr_update[i:i+1],
                         rot_update[i:i+1].squeeze(0),
                         None)
@@ -236,17 +270,29 @@ def randomize_position(data_list, args):
             data_list.set_graph(i, complex_graph)
 
     for i, complex_graph in enumerate(data_list):
-
+        
         pos = complex_graph["ligand"].pos
-        center = torch.mean(pos, dim=0, keepdim=True)
-        random_rotation = torch.from_numpy(R.random().as_matrix())
-        pos = (pos - center) @ random_rotation.T.float() + center
 
-        # random translation
-        tr_update = torch.normal(0, args.tr_s_max, size=(1, 3))
-        pos = pos + tr_update
-        complex_graph["ligand"].pos = pos
-        data_list.set_graph(i, complex_graph)
+        if args.translation and not args.rotation:   #use translation only
+            tr_update = torch.normal(0, args.tr_s_max, size=(1, 3))
+            pos = pos + tr_update
+            complex_graph["ligand"].pos = pos
+        
+        if not args.translation and args.rotation: #use rotation only
+            center = torch.mean(pos, dim=0, keepdim=True)
+            random_rotation = torch.from_numpy(R.random().as_matrix())
+            pos = (pos - center) @ random_rotation.T.float() + center
+            complex_graph["ligand"].pos = pos
+
+        if args.translation and  args.rotation: #use translation and rotation
+            center = torch.mean(pos, dim=0, keepdim=True)
+            tr_update = torch.normal(0, args.tr_s_max, size=(1, 3))
+            random_rotation = torch.from_numpy(R.random().as_matrix())
+            pos = (pos - center) @ random_rotation.T.float() + center +tr_update
+            complex_graph["ligand"].pos = pos
+
+        data_list.set_graph(i, complex_graph) 
+    
 
     return data_list
 

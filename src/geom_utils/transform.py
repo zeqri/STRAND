@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
+from scipy.spatial.transform import Rotation as R
 
 from .so3 import sample_vec, score_vec
 from .torus import score as score_torus
@@ -28,6 +29,10 @@ class NoiseTransform(BaseTransform):
         self.noise_schedule = NoiseSchedule(args)
 
         self.no_torsion = True  # >>> TODO
+
+        self.translation=args.translation
+        self.rotation=args.rotation
+        self.torsion=args.torsion
         self.all_atom = (args.resolution == "atom")
 
     def __call__(self, data):
@@ -56,8 +61,11 @@ class NoiseTransform(BaseTransform):
         if rot_update is None:
             rot_update = sample_vec(eps=rot_s)
             rot_update = torch.from_numpy(rot_update).float()
-        if tor_updates is None and (not self.no_torsion):
-            tor_updates = np.random.normal(loc=0.0,
+        # if tor_updates is None and (not self.no_torsion):    
+        if tor_updates is None:    
+        # if tor_updates is None :        
+            print(data)
+            tor_updates = np.random.normal(loc=0.0, 
                 scale=tor_s, size=data["ligand"].edge_mask.sum())
 
         # apply updates
@@ -76,27 +84,31 @@ class NoiseTransform(BaseTransform):
             data["ligand"].pos
             @param (torch_geometric.data.HeteroData) data
         """
-        com = torch.mean(data["ligand"].pos, dim=0, keepdim=True)
-        rot_mat = axis_angle_to_matrix(rot_update.squeeze())
-        rigid_new_pos = (
+
+        if self.translation and self.rotation:  #apply both
+            com = torch.mean(data["ligand"].pos, dim=0, keepdim=True)
+            rot_mat = axis_angle_to_matrix(rot_update.squeeze())
+            rigid_new_pos = (
             (data["ligand"].pos - com) @ rot_mat.T + tr_update + com
-        )
+             ) 
+        
+        elif self.translation and not self.rotation: #apply only translation 
+            rigid_new_pos = (
+            data["ligand"].pos + tr_update 
+             ) 
+        elif not self.translation and  self.rotation: #apply only rotation
+            com = torch.mean(data["ligand"].pos, dim=0, keepdim=True)
+            rot_mat = axis_angle_to_matrix(rot_update.squeeze())
+            rigid_new_pos = (
+            data["ligand"].pos+ tr_update 
+             ) 
 
         if tor_updates is not None:
-            # select edges to modify (torsion angles only)
-            edge_index = data["ligand", "ligand"].edge_index
-            edge_index = edge_index.T[data["ligand"].edge_mask]
-            # mask which to update
-            mask_rotate = data["ligand"].mask_rotate
-            # data type
-            as_numpy = isinstance(mask_rotate, np.ndarray)
-            if not as_numpy:
-                as_numpy = mask_rotate[0]
-            flex_new_pos = self.apply_torsion_updates(
-                rigid_new_pos, edge_index, mask_rotate,
-                tor_updates, as_numpy)
-            flex_new_pos = flex_new_pos.to(rigid_new_pos.device)
-            # fix orientation to disentangle torsion update
+            flex_new_pos= modify_conformer_torsion_angles(data['ligand'].pos,
+                                                data['ligand', 'ligand'].edge_index.T[
+                                                    data['ligand'].edge_mask],
+                                                data['ligand'].mask_rotate, tor_updates)
+            
             R, t = kabsch_torch(flex_new_pos.T, rigid_new_pos.T)
             aligned_flexible_pos = flex_new_pos @ R.T + t.T
             data["ligand"].pos = aligned_flexible_pos
@@ -146,7 +158,7 @@ class NoiseTransform(BaseTransform):
         rot_score = rot_score.unsqueeze(0)
         data.rot_score = rot_score
         # torsion score
-        if self.no_torsion:
+        if not self.torsion:
             data.tor_score = None
             data.tor_s_edge = None
         else:
@@ -202,3 +214,34 @@ def set_time(complex_graphs, t_tr, t_rot, t_tor,
         "tor": t_tor * torch.ones(batch_size).to(device),
     }
 
+
+def modify_conformer_torsion_angles(pos, edge_index, mask_rotate, torsion_updates, as_numpy=False):
+    # print(pos)
+
+    pos = copy.deepcopy(pos)
+    if type(pos) != np.ndarray: pos = pos.cpu().numpy()
+    
+    if type(mask_rotate) == list: mask_rotate = mask_rotate[0]
+        
+    for idx_edge, e in enumerate(edge_index.cpu().numpy()):
+        if torsion_updates[idx_edge] == 0:
+            continue
+        u, v = e[0], e[1]
+
+        assert not mask_rotate[idx_edge, u]
+        assert mask_rotate[idx_edge, v]
+
+        rot_vec = pos[u] - pos[v]  # convention: positive rotation if pointing inwards
+        
+        rot_nrom = np.linalg.norm(rot_vec)  
+        if rot_nrom < 1e-6:     
+            #In some instances where the atoms are very close the norm would be small producing an error       
+            #make the bond rigid for now
+            continue
+    
+        rot_vec = rot_vec * torsion_updates[idx_edge] / rot_nrom  # idx_edge!
+        rot_mat = R.from_rotvec(rot_vec).as_matrix()
+        pos[mask_rotate[idx_edge]] = (pos[mask_rotate[idx_edge]] - pos[v]) @ rot_mat.T + pos[v]
+
+    if not as_numpy: pos = torch.from_numpy(pos.astype(np.float32))
+    return pos

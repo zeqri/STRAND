@@ -18,7 +18,7 @@ from e3nn.nn import BatchNorm
 from torch_cluster import radius, radius_graph
 from torch_scatter import scatter, scatter_mean
 
-from geom_utils import NoiseSchedule, score_norm
+from geom_utils import NoiseSchedule, score_norm , torus
 from .utils import _init
 
 
@@ -1393,6 +1393,7 @@ class TensorProductScoreModelold(torch.nn.Module):
         ns, nv = self.ns, self.nv  # >>> sigh stupid notation lazy
         self.scale_by_sigma = args.scale_by_sigma
         self.no_torsion = args.no_torsion
+        self.torsion=args.torsion
         self.confidence_mode = confidence_mode
         self.num_conv = args.num_conv_layers
 
@@ -1502,8 +1503,8 @@ class TensorProductScoreModelold(torch.nn.Module):
                 nn.ReLU(),
                 nn.Linear(ns, 1),
             )
-
-            if not self.no_torsion:
+            
+            if  self.torsion:
                 # torsion angles components
                 self.final_edge_embed = nn.Sequential(
                     nn.Linear(args.dist_embed_dim, ns),
@@ -1676,9 +1677,14 @@ class TensorProductScoreModelold(torch.nn.Module):
             rot_pred = rot_pred * score_norm(rot_s)[:, None]
             rot_pred = rot_pred.to(batch["ligand"].x.device)
 
-        if self.no_torsion or batch["ligand"].edge_mask.sum() == 0:
+        # if self.no_torsion or batch["ligand"].edge_mask.sum() == 0:
+        #     tor_pred = torch.empty(0, device=tr_pred.device)
+        #     return tr_pred, rot_pred, tor_pred
+        
+        if not self.torsion or batch["ligand"].edge_mask.sum() == 0:
             tor_pred = torch.empty(0, device=tr_pred.device)
             return tr_pred, rot_pred, tor_pred
+
 
         # >>> FIXED UP TO HERE
 
