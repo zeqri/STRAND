@@ -13,7 +13,7 @@ from torch_geometric.loader import DataLoader, DataListLoader
 from scipy.spatial.transform import Rotation as R
 
 from utils import printt
-from geom_utils import set_time, NoiseTransform
+from geom_utils import set_time, NoiseTransform ,modify_conformer_torsion_angles
 
 def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
            visualization_dir="./visualization", in_batch_size=None,vis_af3_original_prediction=False):
@@ -293,6 +293,21 @@ def randomize_position(data_list, args):
             random_rotation = torch.from_numpy(R.random().as_matrix())
             pos = (pos - center) @ random_rotation.T.float() + center +tr_update
             complex_graph["ligand"].pos = pos
+
+        # # Apply torsional modifications
+        if args.torsion:
+            torsion_updates = np.random.uniform(
+            low=-args.tor_s_min, high=args.tor_s_max,
+            size=complex_graph["ligand"].edge_mask.sum()
+        )
+            pos = modify_conformer_torsion_angles(
+            complex_graph['ligand'].pos,
+            complex_graph['ligand', 'ligand'].edge_index.T[
+                complex_graph['ligand'].edge_mask],
+            complex_graph['ligand'].mask_rotate, 
+            torsion_updates
+            )
+
 
         data_list.set_graph(i, complex_graph) 
     
