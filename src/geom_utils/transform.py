@@ -63,8 +63,6 @@ class NoiseTransform(BaseTransform):
             rot_update = torch.from_numpy(rot_update).float()
         # if tor_updates is None and (not self.no_torsion):    
         if tor_updates is None:    
-        # if tor_updates is None :        
-            print(data)
             tor_updates = np.random.normal(loc=0.0, 
                 scale=tor_s, size=data["ligand"].edge_mask.sum())
 
@@ -100,10 +98,11 @@ class NoiseTransform(BaseTransform):
             com = torch.mean(data["ligand"].pos, dim=0, keepdim=True)
             rot_mat = axis_angle_to_matrix(rot_update.squeeze())
             rigid_new_pos = (
-            data["ligand"].pos+ tr_update 
+            (data["ligand"].pos - com) @ rot_mat.T + com
              ) 
-
-        if tor_updates is not None:
+    
+        # if tor_updates is not None:
+        if self.torsion: 
             flex_new_pos= modify_conformer_torsion_angles(data['ligand'].pos,
                                                 data['ligand', 'ligand'].edge_index.T[
                                                     data['ligand'].edge_mask],

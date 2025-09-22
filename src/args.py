@@ -443,8 +443,7 @@ def process_args(args):
         args.args_file = os.path.join(args.checkpoint_path, args.args_file)
     else:
         args.args_file = os.path.join(args.save_path, args.args_file)
-    args.log_file  = os.path.join(args.save_path, args.log_file)
-
+    args.log_file  = os.path.join(args.save_path, args.log_file) 
     # finally load all saved parameters
     if args.checkpoint_path is not None:
         if not os.path.exists(args.checkpoint_path):
@@ -452,7 +451,6 @@ def process_args(args):
         if os.path.exists(args.args_file):
             with open(args.args_file) as f:
                 saved_config = yaml.safe_load(f)
-        print("here",args.args_file)
         # do not overwrite certain args
         # outer_key is 'data', 'mode', ... inner_key is the correct key
         k_to_skip = [inner_key for outer_key in config.keys() for inner_key in config[outer_key].keys() ]
@@ -464,7 +462,19 @@ def process_args(args):
         for k in k_to_skip:
             if k in saved_config:
                 del saved_config[k]
-        override_args(args, saved_config)
+        override_args(args, saved_config) 
+        
+    if args.score_model_path is not None: 
+        args_file_path = os.path.join(args.score_model_path, "../args.yaml")
+        args_file_path = os.path.abspath(args_file_path) 
+        if os.path.exists(args_file_path):
+            with open(args_file_path) as f:
+                model_args = yaml.safe_load(f)
+            for key in ["torsion", "translation", "rotation","tr_s_max","tr_s_min","rot_s_max","rot_s_min","tor_s_max","tor_s_min"] :
+                if key in model_args:
+                    setattr(args, key, model_args[key])
+            
+        
 
 
 def override_args(args, config):

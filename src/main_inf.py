@@ -84,7 +84,6 @@ def main(args=None):
 
     if args is None:
         args = parse_args()
-    print(args.translation)
     if torch.cuda.is_available():
         torch.cuda.set_device(args.gpu)
     torch.hub.set_dir(args.torchhub_path)
@@ -168,7 +167,7 @@ def main(args=None):
             for batch in loader:
                 original = copy.deepcopy(batch)
                   
-            samples_list = sample(loader, model, args, visualize_first_n_samples=args.visualize_n_val_graphs, visualization_dir=args.visualization_path)
+            samples_list = sample(loader, model, args, visualize_first_n_samples=args.visualize_n_val_graphs, visualization_dir=args.visualization_path,vis_af3_original_prediction=True)
             samples_list.append(original) 
             
             assert len(samples_list)==41
@@ -178,12 +177,12 @@ def main(args=None):
                 break
             pred_list = evaluate_confidence(model_confidence, samples_loader, args)
             sorted_pairs = sorted(zip(samples_list, pred_list), key=lambda x: x[1])
-            for graph, pred in sorted_pairs:
-                printt(f"Graph name: {graph.name}, Prediction: {pred:.4f}")
+            # for graph, pred in sorted_pairs:
+            #     printt(f"Graph name: {graph.name}, Prediction: {pred:.4f}")
             results[i] += sorted_pairs
             sorted_samples = [pair[0] for pair in sorted_pairs]
             sorted_indexes = [samples_list.index(sample) for sample in sorted_samples]
-            printt(f"Sorted sample indices for complex {name}: {sorted_indexes}")
+            # printt(f"Sorted sample indices for complex {name}: {sorted_indexes}")
             printt("Finished Complex!")
             best_index_dict[name[0]] = sorted_indexes 
 

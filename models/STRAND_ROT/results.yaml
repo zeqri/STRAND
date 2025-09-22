@@ -1,0 +1,15 @@
+fold: 0.0
+fold_std: 0.0
+loss: 0.7480975389480591
+loss_std: 0.0
+rot_base_loss: 1.0986754894256592
+rot_base_loss_std: 0.0
+rot_loss: 0.7480975389480591
+rot_loss_std: 0.0
+val_loss: 0.6461062431335449
+val_loss_std: 0.0
+val_rot_base_loss: 0.9531309604644775
+val_rot_base_loss_std: 0.0
+val_rot_loss: 0.6461062431335449
+val_rot_loss_std: 0.0
+

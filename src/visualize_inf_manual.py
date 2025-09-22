@@ -154,15 +154,17 @@ def process_and_plot_path(dir_path, plot_label, output_filename, gt_path,pdf_rep
 
 
 def main(args):
-    os.makedirs(args.pdf_path, exist_ok=True)
-    os.makedirs(args.report_path, exist_ok=True)
+        
+    output_path=f'results/manual/{args.exp_name}'
 
+    os.makedirs(output_path, exist_ok=True)
     path_configs = [
         {
-            'dir_path': args.dir_path,
-            'plot_label': 'STRAND-tr+rot',
-            'output_filename': f'{args.pdf_path}/manual_selection.pdf',
-            'report_path': f'{args.report_path}/manual_selection.pdf'
+            'dir_path': args.samples_path,
+            'plot_label': args.exp_name,
+            'output_filename': f'{output_path}/graph.pdf',
+            'report_path': f'{output_path}/report.pdf'
+    
         }
     ]
 
@@ -196,14 +198,21 @@ if __name__ == "__main__":
     parser.add_argument(
         "--pdf_path",
         type=str,
-        default="results/plots",
+        default="results",
         help="Directory to save PDF plots (default: results/plots)"
     )
 
     parser.add_argument(
         "--report_path",
         type=str,
-        default="results/reports",
+        default="results",
+        help="Directory to save report PDFs (default: results/reports)"
+    ) 
+
+    parser.add_argument(
+        "--exp_name",
+        type=str,
+        default="results/reports_manual",
         help="Directory to save report PDFs (default: results/reports)"
     )
 

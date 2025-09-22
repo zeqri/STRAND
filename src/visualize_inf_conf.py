@@ -80,17 +80,14 @@ def process_and_plot_path(dir_path, plot_label, output_filename, gt_path,pdf_rep
         min_rmsd_filename = None
         af3_dir_path = file.parent  
         pdb_id = file.parent.name + ".dill"  
-        best_index = [str(x+1) for x in dict_file[pdb_id]][:n]  
-
-        
+        best_index = [str(x+1) for x in dict_file[pdb_id]][:n]          
         int_pdb_files = [p for p in af3_dir_path.iterdir()
              if pattern.match(p.name) 
              and not p.name.endswith("-0.pdb") 
              and pattern.match(p.name).group(1) in best_index]  
+
         assert len(int_pdb_files) == n, f"No diffused structures found for {filename}"
    
-        
-
         for af3_diff_file in int_pdb_files:
             diffused_data = extract_pdb_data(af3_diff_file)
             ligand_coors_pred_diff = diffused_data[diffused_data['type'] == 'protein'][['x', 'y', 'z']].values
@@ -114,7 +111,6 @@ def process_and_plot_path(dir_path, plot_label, output_filename, gt_path,pdf_rep
 
     
     create_rmsd_report(complex_rmsd_values, min_rmsd_values , pdf_rep_path)
-
 
     # Plot configuration
     plt.rcParams.update({
@@ -160,48 +156,53 @@ def process_and_plot_path(dir_path, plot_label, output_filename, gt_path,pdf_rep
 
 
 def main(args):
-    os.makedirs(args.pdf_path, exist_ok=True)
-    os.makedirs(args.report_path, exist_ok=True)
+  
+    output_path=f'results/conf/{args.exp_name}'
+    report_path=f'results/conf/{args.exp_name}/report'
+    graph_path=f'results/conf/{args.exp_name}/graph'
+    os.makedirs(output_path, exist_ok=True)
+    os.makedirs(report_path, exist_ok=True)
+    os.makedirs(graph_path, exist_ok=True)
 
-    # Automatically find .pkl file in dir_path
+
     dict_path = next(
-        (os.path.abspath(os.path.join(args.dir_path, f)) for f in os.listdir(args.dir_path) if f.endswith(".pkl")),
+        (os.path.abspath(os.path.join(args.samples_path, f)) for f in os.listdir(args.samples_path) if f.endswith(".pkl")),
         None
     )
 
     if dict_path is None:
-        raise FileNotFoundError(f"No .pkl file found in {args.dir_path}")
+        raise FileNotFoundError(f"No .pkl file found in {args.samples_path}")
 
     with open(dict_path, 'rb') as f:
         dict_file = pickle.load(f)
 
     path_configs = [
         {
-            'dir_path': args.dir_path,
-            'plot_label': 'STRAND-tr+rot',
-            'output_filename': f'{args.pdf_path}/top_1.pdf',
-            'report_path': f'{args.report_path}/top_1.pdf',
+            'dir_path': args.samples_path,
+            'plot_label': args.exp_name,
+            'output_filename': f'{graph_path}/graph_top_1.pdf',
+            'report_path': f'{report_path}/report_top_1.pdf',
             'n': 1,
         },
         {
-            'dir_path': args.dir_path,
-            'plot_label': 'STRAND-tr+rot',
-            'output_filename': f'{args.pdf_path}/top_5.pdf',
-            'report_path': f'{args.report_path}/top_5.pdf',
+            'dir_path': args.samples_path,
+            'plot_label': args.exp_name,
+            'output_filename': f'{graph_path}/graph_top_5.pdf',
+            'report_path': f'{report_path}/report_top_5.pdf',
             'n': 5,
         },
         {
-            'dir_path': args.dir_path,
-            'plot_label': 'STRAND-tr+rot',
-            'output_filename': f'{args.pdf_path}/top_10.pdf',
-            'report_path': f'{args.report_path}/top_10.pdf',
+            'dir_path': args.samples_path,
+            'plot_label': args.exp_name,
+            'output_filename': f'{graph_path}/graph_top_10.pdf',
+            'report_path': f'{report_path}/report_top_10.pdf',
             'n': 10,
         },
         {
-            'dir_path': args.dir_path,
-            'plot_label': 'STRAND-tr+rot',
-            'output_filename': f'{args.pdf_path}/top_20.pdf',
-            'report_path': f'{args.report_path}/top_20.pdf',
+            'dir_path': args.samples_path,
+            'plot_label': args.exp_name,
+            'output_filename': f'{graph_path}/graph_top_20.pdf',
+            'report_path': f'{report_path}/report_top_20.pdf',
             'n': 20,
         },
     ]
@@ -225,16 +226,23 @@ if __name__ == "__main__":
     parser.add_argument(
     "--pdf_path",
     type=str,
-    default="results/plots",
+    default="results/plots_conf",
     help="Directory to save PDF plots (default: results/plots)"
     )
     parser.add_argument(
     "--report_path",
     type=str,
-    default="results/reports",
+    default="results/reports_conf",
     help="Directory to save report PDFs (default: results/reports)"
 )
-    parser.add_argument("--samples_path", type=str, required=True, help="Directory containing refined data and .pkl file")
+    parser.add_argument("--samples_path", type=str, required=True, help="Directory containing refined data and .pkl file") 
+    
+    parser.add_argument(
+        "--exp_name",
+        type=str,
+        default="STRAND-tr+rot",
+        help="Name of the experiment"
+    )
 
     args = parser.parse_args()
     main(args)

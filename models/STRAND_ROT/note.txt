@@ -1,0 +1,1 @@
+rot 2 experiment is different thean rot1 , randomize function was modified in the smapling function by adding back the center value. 

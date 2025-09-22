@@ -32,7 +32,7 @@ def load_model(args, model_params, fold, load_best=True, confidence_mode = False
         if confidence_mode:
             model = ConfidenceModel(model_args, model_params, **kwargs)
         else:
-            model = ScoreModel(model_args, model_params, **kwargs)
+            model = ScoreModel(model_args, model_params, **kwargs)  
     else:
         raise Exception(f"invalid model type {args.model_type}")
     printt("loaded model with kwargs:", " ".join(kwargs.keys()))

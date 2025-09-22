@@ -16,7 +16,7 @@ from utils import printt
 from geom_utils import set_time, NoiseTransform
 
 def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
-           visualization_dir="./visualization", in_batch_size=None):
+           visualization_dir="./visualization", in_batch_size=None,vis_af3_original_prediction=False):
     """
         Run reverse process
     """
@@ -49,6 +49,9 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
               f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-gt.pdb")
         write_pdb(visualization_values[i], data_list[i], "both",
               f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-0.pdb")
+        if vis_af3_original_prediction:
+           write_pdb(visualization_values[i], graph_gts[i], "both",
+            f"{visualization_dirs[i]}/{four_letter_pdb_names[i]}-ligand-41.pdb") 
 
 
     # sample
@@ -274,7 +277,7 @@ def randomize_position(data_list, args):
         pos = complex_graph["ligand"].pos
 
         if args.translation and not args.rotation:   #use translation only
-            tr_update = torch.normal(0, args.tr_s_max, size=(1, 3))
+            tr_update = torch.normal(0, args.tr_s_max, size=(1, 3)) 
             pos = pos + tr_update
             complex_graph["ligand"].pos = pos
         
