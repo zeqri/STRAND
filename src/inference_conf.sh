@@ -78,7 +78,7 @@ for i in "${!SCORE_PATHS[@]}"; do
         --num_gpu $NUM_GPU \
         --gpu $CUDA --seed $SEED \
         --logger "wandb" \
-        --project "DiffDock Tuning" \
+        --project "STRAND Tuning" \
         --visualize_n_val_graphs 100 \
         --visualization_path $VISUALIZATION_PATH \
         --filtering_model_path $FILTERING_PATH \

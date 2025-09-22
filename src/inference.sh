@@ -6,7 +6,7 @@ BATCH_SIZE=1  # split across all GPUs
 NUM_SAMPLES=40
 
 NAME="rna_inf"  # change to name of config file
-RUN_NAME="STRAND_TR_ROT"
+RUN_NAME="STRAND"
 CONFIG="config/${NAME}.yaml"
 
 SAVE_PATH="ckpts/${RUN_NAME}"
@@ -43,7 +43,7 @@ python src/main_inf.py \
     --num_gpu $NUM_GPU \
     --gpu $CUDA --seed $SEED \
     --logger "wandb" \
-    --project "DiffDock Tuning" \
+    --project "STRAND Tuning" \
     --visualize_n_val_graphs 100 \
     --visualization_path $VISUALIZATION_PATH \
     --filtering_model_path $FILTERING_PATH \
