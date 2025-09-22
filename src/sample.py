@@ -254,7 +254,7 @@ def randomize_position(data_list, args):
     """
     data_list = copy.deepcopy(data_list)
 
-    if not args.no_torsion:
+    if  args.no_torsion:
         raise Exception("not yet implemented")
         # randomize torsion angles
         for i, complex_graph in enumerate(data_list):

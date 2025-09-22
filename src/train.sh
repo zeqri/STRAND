@@ -12,11 +12,12 @@ SAVE_PATH="ckpts/${RUN_NAME}"
 VISUALIZATION_PATH="visualization/${RUN_NAME}"
 
 
-# Data_path="datasets/train/af3_1022P_1022R_aug"
-# Data_file="datasets/train/af3_1022P_1022R_aug.csv"
+#augmented used with tr+rot and rot models.
+Data_file="datasets/train/af3_1022P_1022R_aug.csv" #csv file for the data names and the split 
+Data_path="datasets/train/af3_1022P_1022R_aug" #dir to the stored dill files
 
-Data_path="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug"
-Data_file="/Users/muhsenalzzaqry/Desktop/STRAND_DEV/STRAND/datasets/debug_train.csv"
+# Data_file="datasets/train/af3_1022P_1022R.csv" #csv file for the data names and the split
+# Data_path="datasets/train/af3_1022P_1022R"  #dir to the stored dill files
 
 echo SAVE_PATH: $SAVE_PATH
 
@@ -44,7 +45,7 @@ python src/main.py \
     --translation True\
     --rotation True\
     --torsion False\
-    # --recache \
+    --recache \
     #--checkpoint_path $SAVE_PATH \
     #--debug True # load small dataset
     #--entity coarse-graining-mit \

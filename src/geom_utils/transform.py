@@ -62,7 +62,7 @@ class NoiseTransform(BaseTransform):
             rot_update = sample_vec(eps=rot_s)
             rot_update = torch.from_numpy(rot_update).float()
         # if tor_updates is None and (not self.no_torsion):    
-        if tor_updates is None:    
+        if tor_updates is None and self.torsion:    
             tor_updates = np.random.normal(loc=0.0, 
                 scale=tor_s, size=data["ligand"].edge_mask.sum())
 

@@ -69,12 +69,15 @@ sh src/inference_conf.sh xray
 
 Refined structures and evaluation metrics will be saved in the `results/` directory, organized by dataset and method used.
 
+# Training
 
-<!-- # Training 
 
-**SCORE MODEL:**
+Download PDB files containing RNA-protein complexe before the cutoff date 30.Sept.2021 via the website and store them into `datasets/pdb_files` or run the command: 
 
-Download PDB files containing RNA-protein complexe before the cutoff date 30.Sept.2021 and store them into `datasets/pdb_files`. 
+```
+mk dir datasets/pdb_files 
+sh datasets/batch_download.sh -f  datasets/list_file.txt -p -o datasets/pdb_files  
+```
 
 All the data must be stored as dill files, to do so run:
 
@@ -88,18 +91,6 @@ Strand tr+rot utalized data augmentation during training, to augment the data ru
 ```
 sh src/data/preprocessing/data_aug.sh
 ```
-
-
-To start training the STRAND run: 
-
-```
-sh src/train.sh
-``` 
-The Default model that will be trained is STRAND-tr+rot. Configure the boolean arguents --translation --rotation and --torsion in the file `src/train.sh` to train on other spaitial  -->
-
-# Training
-
-**Confidence model:**
 
 
 ## 🎯 Default Training Configuration
@@ -117,20 +108,14 @@ To train with different spatial transformations, modify the boolean arguments in
 --torsion      True # Enable torsion angle refinement
 ```
 
-### Training Variants
-
-| Configuration | Command Example | Description |
-|---------------|----------------|-------------|
-| **Translation only** | `--translation` | Refines only translational movements |
-| **Rotation only** | `--rotation` | Refines only rotational movements |
-| **Torsion only** | `--torsion` | Refines only torsion angles |
-| **Translation + Rotation** (default) | `--translation --rotation` | Combined translation and rotation |
-| **All transformations** | `--translation --rotation --torsion` | Full spatial refinement |
-
 ## 🚀 Starting Training
 
-1. Configure your desired spatial transformations in `src/train.sh`
-2. Run the training script:
+
+**Score model:**
+
+1. Set `Data_file` and `Data_path` variables in `src/train.sh`.
+2. Configure your desired spatial transformations in `src/train.sh`.
+3. Run the training script:
 
 ```bash
 sh src/train.sh
@@ -208,7 +193,6 @@ To display the confidence model selection results run:
 
 ```
 python src/visualize_inf_conf.py  --gt_path datasets/gt_dir --samples_path visualization/STRAND
-
 ```
 
 
