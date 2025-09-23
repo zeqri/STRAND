@@ -97,8 +97,8 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
                 outputs = model(complex_graphs)
             tr_score = outputs["tr_pred"].cpu()
             rot_score = outputs["rot_pred"].cpu()
-            tor_score = outputs["tor_pred"].cpu()
-
+            tor_score = outputs["tor_pred"].cpu() 
+            
             # translation gradient (?)
             tr_scale = torch.sqrt(
                 2 * torch.log(torch.tensor(args.tr_s_max /
@@ -116,7 +116,6 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
                     torch.log(torch.tensor(args.tor_s_max /
                                            args.tor_s_min)))
                 tor_g = 2 * tor_s * tor_scale
-
 
             # actual update
             if args.ode:
@@ -166,17 +165,18 @@ def sample(data_list, model, args, epoch=0, visualize_first_n_samples=0,
 
             # apply transformations
             if type(complex_graphs) is not list:
-                complex_graphs = complex_graphs.to("cpu").to_data_list()
+                complex_graphs = complex_graphs.to("cpu").to_data_list() 
+            
+            offset=0
             for i, data in enumerate(complex_graphs):
-
-
+                num_torsions = data["ligand"].edge_mask.shape[0] // 2
+                torsion_slice = tor_update[offset:offset + num_torsions]
                 if args.torsion: 
                     new_graph = transform.apply_updates(data,
                         tr_update[i:i+1],
                         rot_update[i:i+1].squeeze(0),
-                        tor_update.detach().cpu().numpy()
-    
-                        # tor_update[i:i+1].squeeze(0)
+                        torsion_slice.detach().cpu().numpy()
+                        # tor_update.detach().cpu().numpy()
                         )
                 else:
                     new_graph = transform.apply_updates(data,
@@ -253,24 +253,6 @@ def randomize_position(data_list, args):
         Modify COPY of data_list objects
     """
     data_list = copy.deepcopy(data_list)
-
-    if  args.no_torsion:
-        raise Exception("not yet implemented")
-        # randomize torsion angles
-        for i, complex_graph in enumerate(data_list):
-            torsion_updates = np.random.uniform(
-                low=-np.pi, high=np.pi,
-                size=complex_graph["ligand"].edge_mask.sum()
-            )
-            complex_graph["ligand"].pos = modify_conformer_torsion_angles(
-                complex_graph["ligand"].pos,
-                complex_graph["ligand", "ligand"].edge_index.T[
-                    complex_graph["ligand"].edge_mask
-                ],
-                complex_graph["ligand"].mask_rotate[0],
-                torsion_updates,
-            )
-            data_list.set_graph(i, complex_graph)
 
     for i, complex_graph in enumerate(data_list):
         
